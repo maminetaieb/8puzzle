@@ -47,7 +47,9 @@ func (p Puzzle) ClosestPathTo(g Puzzle) actions {
 	init := &qElement{p, ' ', nil}
 	q = &queue{init, init}
 
-	return continueUntil(g)
+	a := continueUntil(g)
+	a = actions(a[1:])
+	return a
 }
 
 func continueUntil(g Puzzle) actions {
@@ -56,16 +58,16 @@ func continueUntil(g Puzzle) actions {
 	if p.Equals(g) {
 		return actions(act)
 	}
-	if newPzl, okNew := MoveUp(p); okNew {
+	if newPzl, okNew := MoveUp(p); okNew && act != down {
 		pend(newPzl, 'U')
 	}
-	if newPzl, okNew := MoveDown(p); okNew {
+	if newPzl, okNew := MoveDown(p); okNew && act != up {
 		pend(newPzl, 'D')
 	}
-	if newPzl, okNew := MoveLeft(p); okNew {
+	if newPzl, okNew := MoveLeft(p); okNew && act != right {
 		pend(newPzl, 'L')
 	}
-	if newPzl, okNew := MoveRight(p); okNew {
+	if newPzl, okNew := MoveRight(p); okNew && act != left {
 		pend(newPzl, 'R')
 	}
 
@@ -91,25 +93,22 @@ func (a actions) String() string {
 	return s
 }
 
-func (p Puzzle) Follow(a actions) string {
-	if len(a) == 0 {
-		return p.String()
-	}
-
-	switch action(a[0]) {
-	case up:
-		np, _ := MoveUp(p)
-		return p.String() + "\n" + np.Follow(actions(a[1:]))
-	case down:
-		np, _ := MoveDown(p)
-		return p.String() + "\n" + np.Follow(actions(a[1:]))
-	case left:
-		np, _ := MoveLeft(p)
-		return p.String() + "\n" + np.Follow(actions(a[1:]))
-	case right:
-		np, _ := MoveRight(p)
-		return p.String() + "\n" + np.Follow(actions(a[1:]))
-	default:
-		return ""
+func (p Puzzle) Trace(a actions) {
+	fmt.Println(p)
+	if len(a) != 0 {
+		switch action(a[0]) {
+		case up:
+			np, _ := MoveUp(p)
+			np.Trace(actions(a[1:]))
+		case down:
+			np, _ := MoveDown(p)
+			np.Trace(actions(a[1:]))
+		case left:
+			np, _ := MoveLeft(p)
+			np.Trace(actions(a[1:]))
+		case right:
+			np, _ := MoveRight(p)
+			np.Trace(actions(a[1:]))
+		}
 	}
 }

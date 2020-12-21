@@ -8,11 +8,11 @@ import (
 func main() {
 	var (
 		p = p8.RandomPuzzle(50)
-		g = p.Randomize(10)
+		g = p8.Shuffle(p, 10)
 	)
 
 	fmt.Println("Generated:"); fmt.Println(p)
-	fmt.Println("Randomized:"); fmt.Println(g)
+	fmt.Println("Shuffled:"); fmt.Println(g)
 
-	fmt.Println(p.ClosestPathTo(g))
+	p.Trace(p.ClosestPathTo(g))
 }

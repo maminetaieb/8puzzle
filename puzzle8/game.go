@@ -57,36 +57,36 @@ func RandomPuzzle(l int) Puzzle {
 }
 
 // Manipulating puzzles
-func (p Puzzle) Randomize(c int) Puzzle {	// c: how many changes
-	for c > 0 {
+func Shuffle(p Puzzle, times int) Puzzle {
+	for times > 0 {
 		switch rand.Intn(4) {
 		case 0:
 			if n, ok := MoveUp(p); !ok {
 				continue
 			} else {
 				p = n
-				c--
+				times--
 			}
 		case 1:
 			if n, ok := MoveDown(p); !ok {
 				continue
 			} else {
 				p = n
-				c--
+				times--
 			}
 		case 2:
 			if n, ok := MoveLeft(p); !ok {
 				continue
 			} else {
 				p = n
-				c--
+				times--
 			}
 		case 3:
 			if n, ok := MoveRight(p); !ok {
 				continue
 			} else {
 				p = n
-				c--
+				times--
 			}
 		}
 	}
