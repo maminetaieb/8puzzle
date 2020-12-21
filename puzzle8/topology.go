@@ -1,76 +1,115 @@
 package puzzle8
 
-import "fmt"
+import (
+	"fmt"
+)
 
-type node struct {
-	pzl Puzzle
-	actions string
-	nextNode *node		// horizontally
-	nextLineNode *node	// Vertically
+// Actions performed on puzzles
+type actions string
+type action byte
+const (
+	up action = 'U'
+	down = 'D'
+	left = 'L'
+	right = 'R'
+)
+
+// Queue
+type qElement struct {
+	rep Puzzle
+	act action
+	next *qElement
 }
-func (p Puzzle) GetPathTo(goal Puzzle) (s string) {
-	n := (&node{p, "", nil, nil}).genNextLine(goal, true)
-	s = fmt.Sprintf("%d actions performed to reach goal\n", len(n.actions))
-	for i:=0; i < len(n.actions); i++ {
-		switch n.actions[i] {
-		case 'U':
-			s += fmt.Sprintln("0 Moved up.")
-		case 'D':
-			s += fmt.Sprintln("0 Moved down.")
-		case 'L':
-			s += fmt.Sprintln("0 Moved left.")
-		case 'R':
-			s += fmt.Sprintln("0 Moved right.")
-		}
-	}
-	return
+type queue struct {
+	head *qElement
+	tail *qElement
+}
+var q *queue
+
+func pend(p Puzzle, act action) {	// aka add element
+	q.tail.next = &qElement{p, act, nil}
+	q.tail = q.tail.next
 }
 
-func (parent *node) genNextLine(goal Puzzle, isLastNodeInline bool) *node {
-	if up, okUp := MoveUp(parent.pzl); okUp {
-		u := &node {up, parent.actions+"U", nil, nil}
-		parent.nextLineNode = u
-		if u.pzl.Equals(goal) {
-			return u
+func popAction() action {
+	defer func() {
+		q.head = q.head.next
+		if (q.head == nil) {
+			q.tail = nil
 		}
+	}()
+
+	return q.head.act
+}
+
+// Searching path
+func (p Puzzle) ClosestPathTo(g Puzzle) actions {
+	init := &qElement{p, ' ', nil}
+	q = &queue{init, init}
+
+	return continueUntil(g)
+}
+
+func continueUntil(g Puzzle) actions {
+	p, act := q.head.rep, q.head.act
+
+	if p.Equals(g) {
+		return actions(act)
 	}
-	if down, okDown := MoveDown(parent.pzl); okDown {
-		d := &node {down, parent.actions+"D", nil, nil}
-		if (parent.nextLineNode == nil) {
-			parent.nextLineNode = d
-		} else {
-			parent.nextLineNode.nextNode = d
-		}
-		if d.pzl.Equals(goal) {
-			return d
-		}
+	if newPzl, okNew := MoveUp(p); okNew {
+		pend(newPzl, 'U')
 	}
-	if left, okLeft := MoveLeft(parent.pzl); okLeft {
-		l := &node {left, parent.actions+"L", nil, nil}
-		var curr *node
-		for curr = parent.nextLineNode; curr.nextNode != nil; {
-			curr = curr.nextNode
-		}
-		curr.nextNode = l
-		if l.pzl.Equals(goal) {
-			return l
-		}
+	if newPzl, okNew := MoveDown(p); okNew {
+		pend(newPzl, 'D')
 	}
-	if right, okRight := MoveRight(parent.pzl); okRight {
-		r := &node {right, parent.actions+"R", nil, nil}
-		var curr *node
-		for curr = parent.nextLineNode; curr.nextNode != nil; {
-			curr = curr.nextNode
-		}
-		curr.nextNode = r
-		if r.pzl.Equals(goal) {
-			return r
+	if newPzl, okNew := MoveLeft(p); okNew {
+		pend(newPzl, 'L')
+	}
+	if newPzl, okNew := MoveRight(p); okNew {
+		pend(newPzl, 'R')
+	}
+
+	return actions(popAction()) + continueUntil(g)
+}
+
+// Printing
+func (a actions) String() string {
+	s := fmt.Sprintln("At least", len(a), "actions needed:")
+	for i := 0; i < len(a); i++ {
+		switch action(a[i]) {
+		case up:
+			s += fmt.Sprintln(i+1, "- Up")
+		case down:
+			s += fmt.Sprintln(i+1, "- Down")
+		case left:
+			s += fmt.Sprintln(i+1, "- Left")
+		case right:
+			s += fmt.Sprintln(i+1, "- Right")
 		}
 	}
 
-	if (isLastNodeInline) {
-		return parent.nextLineNode.genNextLine(goal, isLastNodeInline && parent.nextLineNode.nextNode == nil)
-	} else {
-		return parent.nextNode.genNextLine(goal, isLastNodeInline && parent.nextNode.nextNode == nil)
+	return s
+}
+
+func (p Puzzle) Follow(a actions) string {
+	if len(a) == 0 {
+		return p.String()
+	}
+
+	switch action(a[0]) {
+	case up:
+		np, _ := MoveUp(p)
+		return p.String() + "\n" + np.Follow(actions(a[1:]))
+	case down:
+		np, _ := MoveDown(p)
+		return p.String() + "\n" + np.Follow(actions(a[1:]))
+	case left:
+		np, _ := MoveLeft(p)
+		return p.String() + "\n" + np.Follow(actions(a[1:]))
+	case right:
+		np, _ := MoveRight(p)
+		return p.String() + "\n" + np.Follow(actions(a[1:]))
+	default:
+		return ""
 	}
 }
